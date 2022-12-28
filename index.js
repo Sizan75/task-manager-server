@@ -2,7 +2,7 @@ const express=require('express')
 const cors=require('cors')
 const app= express()
 const port= process.env.PORT || 5000;
-
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 app.use(express.json())
 app.use(cors())
@@ -13,53 +13,21 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 
 async function run() {
     try{
-        const foodCollection= client.db('happilyfreshdb').collection('foodservice')
-        const reviewCollection= client.db('happilyfreshdb').collection('review')
+        const taskCollection= client.db('taskManager').collection('tasks')
+        const usersCollection= client.db('taskManager').collection('users')
     
-        
-        app.get('/myreviews',async(req,res)=>{
-           
-            let query = {};
-    
-            if (req.query.userEmail) {
-                query = {
-                    userEmail: req.query.userEmail
-                }
-            }
-            const cursor = reviewCollection.find(query);
-            const myreview = await cursor.toArray();
-            res.send(myreview);
-        })
-    
-        
-    
-        app.post('/foodservices', async(req,res)=>{
-            const food=req.body
-            const result = await foodCollection.insertOne(food)
+        app.post('/users', async (req, res) => {
+            const user = req.body
+            const result = await usersCollection.insertOne(user)
             res.send(result)
         })
-    
-        app.put('/reviews/:id', async (req, res) => {
-            const id = req.params.id;
-            const filter = { _id: ObjectId(id) };
-            const newrev = req.body;
-            const option = {upsert: true};
-            const updatedreview = {
-                $set: {
-                    review: newrev.review,
-                    
-                }
-            }
-            const result = await reviewCollection.updateOne(filter, updatedreview, option);
+
+        app.post('/tasks', async (req, res) => {
+            const tasks = req.body;
+            const result = await taskCollection.insertOne(tasks);
             res.send(result);
         })
-    
-        app.delete('/reviews/:id',async(req,res)=>{
-            const id=req.params.id
-            const query={_id: ObjectId(id)}
-            const result = await reviewCollection.deleteOne(query)
-            res.send(result)
-           }) 
+
     }
     finally{
     
@@ -68,10 +36,10 @@ async function run() {
     run().catch(error=>console.error(error))
 
     app.get('/',(req,res)=>{
-        res.send('happily fresh server running')
+        res.send('Task Manager server running')
     })
     
     app.listen(port, ()=>{
-        console.log(`happily Fresh server running in port ${port}` )
+        console.log(`task manager server running in port ${port}` )
     
     })
